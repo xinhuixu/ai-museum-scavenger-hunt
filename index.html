@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Your Museum Scavenger Hunt</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* optional highlight state so user sees what they clicked */
+    .topic-btn.selected {
+      background: #111;
+      color: #fff;
+      border-color: #000;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Create Your Own Museum Scavenger Hunt!</h1>
+  <p>
+    Find artworks that match your interests with an AI-generated scavenger hunt map.
+    Currently available for The Metropolitan Museum of Art (The Met). More museums coming soon.
+  </p>
+</header>
+
+<main>
+
+  <!-- Section: Museum Selection -->
+  <section>
+    <label class="label" for="museum">Select your museum</label>
+    <select id="museum" disabled>
+      <option>The Met (New York City)</option>
+      <option>MoMA (coming soon)</option>
+      <option>Louvre (coming soon)</option>
+      <option>British Museum (coming soon)</option>
+    </select>
+    <div class="hint">
+      You are at: The Met
+    </div>
+  </section>
+
+  <!-- Section: Topic Selection -->
+  <section>
+    <div class="label">Choose a topic of interest</div>
+
+    <div class="topics-grid" id="topics-grid">
+      <button class="topic-btn" type="button" onclick="selectTopic('Animals')">Animals</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Transportation Vehicles')">Transportation Vehicles</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Fashion')">Fashion</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Ancient Egypt')">Ancient Egypt</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Warriors & Battles')">Warriors &amp; Battles</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Music & Instruments')">Music &amp; Instruments</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Flowers & Plants')">Flowers &amp; Plants</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Portraits')">Portraits</button>
+    </div>
+
+    <div class="label" style="margin-top:16px;">Or enter your own topic</div>
+    <input
+      type="text"
+      id="custom-topic"
+      placeholder="Example: dragons, cats, space, myths"
+    />
+    <div class="hint">
+      If you type here, that will override the button you clicked.
+    </div>
+  </section>
+
+  <!-- Section: Generate -->
+  <section>
+    <button class="generate-btn" id="generate-btn" type="button">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        style="vertical-align:middle;margin-right:8px;"
+      >
+        <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 1 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+      </svg>
+      Generate Map
+    </button>
+  </section>
+
+</main>
+
+<footer>
+  Prototype interface. Text and layout subject to change.
+</footer>
+
+<script>
+    // SEND TO n8n
+    // const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook-test/83e18bf2-4e57-48e4-bd1f-a27b529435be";
+    const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook/83e18bf2-4e57-48e4-bd1f-a27b529435be";
+
+  // 1. Store which pre-set topic was clicked
+  let selectedPresetTopic = null;
+
+  function selectTopic(topicText) {
+    selectedPresetTopic = topicText;
+
+    // clear highlight on all, then highlight the one that was clicked
+    const allButtons = document.querySelectorAll('.topic-btn');
+    allButtons.forEach(btn => {
+      btn.classList.remove('selected');
+    });
+
+    // find the one with matching text and mark it
+    const match = Array.from(allButtons).find(
+      btn => btn.textContent.trim() === topicText
+    );
+    if (match) {
+      match.classList.add('selected');
+    }
+
+    // also clear custom input, since user chose a preset
+    document.getElementById('custom-topic').value = '';
+  }
+
+  // 2. When user clicks Generate Map, send topic + museum to n8n
+  async function submitTopic() {
+    const customTopic = document.getElementById('custom-topic').value.trim();
+    const museum = "The Met";
+    const finalTopic = customTopic !== "" ? customTopic : selectedPresetTopic;
+
+    if (!finalTopic) {
+      alert("Please pick a topic or type your own.");
+      return;
+    }
+
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          museum: museum,
+          topic: finalTopic
+        })
+      });
+
+      // Try to parse JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // If n8n returns plain text instead of JSON, fall back
+        const text = await response.text();
+        data = { output: text };
+      }
+
+      // Save what we got for map.html
+      // We'll show this text on the results page
+      localStorage.setItem("huntTopic", finalTopic);
+      localStorage.setItem("huntOutput", data.output || "");
+
+      // Go to the results page
+      window.location.href = "map.html";
+    } catch (err) {
+      console.error("Error calling backend:", err);
+      alert("There was an error generating your map. Please try again.");
+    }
+  }
+
+
+
+  // hook up the button
+  document.getElementById('generate-btn').addEventListener('click', submitTopic);
+</script>
+
+</body>
+</html>

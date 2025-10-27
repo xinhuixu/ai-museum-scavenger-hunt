@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Scavenger Hunt Map</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* This is just to make the AI output readable in the preview box */
+    .results-scroll {
+      width: 100%;
+      height: 320px;
+      background: #fff;
+      border: 1px solid #999;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 0.8rem;
+      color: #333;
+      line-height: 1.4;
+      padding: 12px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      white-space: pre-line; /* so \n\n keeps line breaks from AI */
+    }
+  </style>
+</head>
+<body>
+
+<header class="map-header">
+  <h1 id="map-header-title">Your Scavenger Hunt Map</h1>
+  <p>
+    Explore the museum and find these hidden treasures.
+  </p>
+</header>
+
+<main>
+
+  <!-- Instead of PDF preview, show AI results for now -->
+  <div class="pdf-preview-wrapper">
+    <div class="results-scroll" id="results-text">
+      Loading scavenger hunt...
+    </div>
+
+    <div class="pdf-actions">
+        <a
+          href="#"
+          target="_blank"
+          id="view-full-link"
+          class="pdf-actions-link"
+        >
+        
+          <span>View full map</span>
+        </a>
+        <span>(PDF coming soon)</span>
+      </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="btn-row">
+
+    <button
+      class="action-btn primary"
+      onclick="location.href='mailto:?subject=My%20Met%20Scavenger%20Hunt&body=Here%20is%20my%20scavenger%20hunt%20text:%0A%0A' + encodeURIComponent(document.getElementById('results-text').innerText)"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="btn-icon"
+      >
+        <polyline points="22,6 12,13 2,6" />
+        <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+      </svg>
+      <span>Email to Myself</span>
+    </button>
+  
+    <button
+      class="action-btn"
+      onclick="window.print()"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="btn-icon"
+      >
+        <polyline points="6 9 6 2 18 2 18 9" />
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+        <rect x="6" y="14" width="12" height="8" />
+      </svg>
+      <span>Print Map</span>
+    </button>
+  
+    <button
+      class="action-btn"
+      onclick="location.href='index.html'"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="btn-icon"
+      >
+        <polyline points="23 4 23 10 17 10" />
+        <path d="M20.49 15a9 9 0 1 1 2.13-9" />
+      </svg>
+      <span>Generate Another Map</span>
+    </button>
+  
+  </div>
+
+</main>
+
+<footer>
+  Prototype interface. Text and layout subject to change.
+</footer>
+
+<script>
+  // Pull what we saved from index.html after calling n8n
+  const topic = localStorage.getItem("huntTopic") || "Your Topic";
+  const outputText = localStorage.getItem("huntOutput") || "No data.";
+
+  // Update header title
+  const headerEl = document.getElementById("map-header-title");
+  headerEl.textContent = `Your Scavenger Hunt Map for "${topic}" at The Met`;
+
+  // Update results area
+  const resultsBox = document.getElementById("results-text");
+  resultsBox.textContent = outputText;
+</script>
+
+</body>
+</html>
