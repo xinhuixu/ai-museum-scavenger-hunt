@@ -52,7 +52,7 @@
       <button class="topic-btn" type="button" onclick="selectTopic('Warriors & Battles')">Warriors &amp; Battles</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Music & Instruments')">Music &amp; Instruments</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Flowers & Plants')">Flowers &amp; Plants</button>
-      <button class="topic-btn" type="button" onclick="selectTopic('Portraits')">Portraits</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Kings & Queens')">Kings &amp; Queens</button>
     </div>
 
     <div class="label" style="margin-top:16px;">Or enter your own topic</div>
@@ -68,24 +68,54 @@
 
   <!-- Section: Generate -->
   <section>
-    <button class="generate-btn" id="generate-btn" type="button">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
+
+<button class="generate-btn" id="generate-btn" type="button">
+  <!-- visible by default -->
+  <span class="generate-inner" id="btn-content">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 1 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+    <span>Generate Map</span>
+  </span>
+
+  <!-- hidden until click -->
+  <span class="generate-inner" id="btn-loading" style="display:none;">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="loading-spinner"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-opacity="0.25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
-        style="vertical-align:middle;margin-right:8px;"
-      >
-        <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 1 1 18 0z"></path>
-        <circle cx="12" cy="10" r="3"></circle>
-      </svg>
-      Generate Map
-    </button>
+        stroke-opacity="1"
+      />
+    </svg>
+    <span>Generating…</span>
+  </span>
+</button>
+
   </section>
 
 </main>
@@ -99,41 +129,42 @@
     // const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook-test/83e18bf2-4e57-48e4-bd1f-a27b529435be";
     const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook/83e18bf2-4e57-48e4-bd1f-a27b529435be";
 
-  // 1. Store which pre-set topic was clicked
+
   let selectedPresetTopic = null;
 
   function selectTopic(topicText) {
     selectedPresetTopic = topicText;
 
-    // clear highlight on all, then highlight the one that was clicked
     const allButtons = document.querySelectorAll('.topic-btn');
-    allButtons.forEach(btn => {
-      btn.classList.remove('selected');
-    });
+    allButtons.forEach(btn => btn.classList.remove('selected'));
 
-    // find the one with matching text and mark it
     const match = Array.from(allButtons).find(
       btn => btn.textContent.trim() === topicText
     );
-    if (match) {
-      match.classList.add('selected');
-    }
+    if (match) match.classList.add('selected');
 
-    // also clear custom input, since user chose a preset
     document.getElementById('custom-topic').value = '';
   }
 
-  // 2. When user clicks Generate Map, send topic + museum to n8n
   async function submitTopic() {
+    const generateBtn = document.getElementById('generate-btn');
+    const btnContent = document.getElementById('btn-content');
+    const btnLoading = document.getElementById('btn-loading');
+
     const customTopic = document.getElementById('custom-topic').value.trim();
     const museum = "The Met";
-    const finalTopic = customTopic !== "" ? customTopic : selectedPresetTopic;
+    const finalTopic = customTopic || selectedPresetTopic;
 
+    // 1. VALIDATION FIRST
     if (!finalTopic) {
       alert("Please pick a topic or type your own.");
       return;
     }
 
+    // 2. NOW enter loading state (only if we passed validation)
+    generateBtn.classList.add('is-loading');
+    btnContent.style.display = 'none';
+    btnLoading.style.display = 'inline-flex';
 
     try {
       const response = await fetch(WEBHOOK_URL, {
@@ -145,33 +176,32 @@
         })
       });
 
-      // Try to parse JSON
       let data;
       try {
         data = await response.json();
-      } catch (e) {
-        // If n8n returns plain text instead of JSON, fall back
+      } catch {
         const text = await response.text();
         data = { output: text };
       }
 
-      // Save what we got for map.html
-      // We'll show this text on the results page
       localStorage.setItem("huntTopic", finalTopic);
       localStorage.setItem("huntOutput", data.output || "");
 
-      // Go to the results page
       window.location.href = "map.html";
     } catch (err) {
-      console.error("Error calling backend:", err);
+      console.error("Fetch error:", err);
       alert("There was an error generating your map. Please try again.");
+
+      // restore button so they can retry
+      generateBtn.classList.remove('is-loading');
+      btnContent.style.display = 'inline-flex';
+      btnLoading.style.display = 'none';
     }
   }
 
-
-
-  // hook up the button
-  document.getElementById('generate-btn').addEventListener('click', submitTopic);
+  document
+    .getElementById('generate-btn')
+    .addEventListener('click', submitTopic);
 </script>
 
 </body>
