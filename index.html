@@ -126,7 +126,6 @@
 
 <script>
     // SEND TO n8n
-    // const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook-test/83e18bf2-4e57-48e4-bd1f-a27b529435be";
     const WEBHOOK_URL = "https://xinhuix-n8n-free.hf.space/webhook/83e18bf2-4e57-48e4-bd1f-a27b529435be";
 
 
@@ -184,10 +183,12 @@
         data = { output: text };
       }
 
-      localStorage.setItem("huntTopic", finalTopic);
-      localStorage.setItem("huntOutput", data.output || "");
+  // Persist response for map page to consume
+  localStorage.setItem("huntTopic", finalTopic);
+  localStorage.setItem("huntOutput", data.output || "");
 
-      window.location.href = "map.html";
+  // Navigate directly to the map page (skip debug panel)
+  window.location.href = 'map.html';
     } catch (err) {
       console.error("Fetch error:", err);
       alert("There was an error generating your map. Please try again.");
@@ -202,6 +203,8 @@
   document
     .getElementById('generate-btn')
     .addEventListener('click', submitTopic);
+
+  // Debug panel removed: navigation happens directly to map.html after webhook
 </script>
 
 </body>
