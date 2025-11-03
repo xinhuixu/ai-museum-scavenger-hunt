@@ -47,7 +47,7 @@
     <div class="topics-grid" id="topics-grid">
       <button class="topic-btn" type="button" onclick="selectTopic('Space')">Space</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Transportation Vehicles')">Transportation Vehicles</button>
-      <button class="topic-btn" type="button" onclick="selectTopic('Fashion')">Fashion</button>
+      <button class="topic-btn" type="button" onclick="selectTopic('Cats')">Cats</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Ancient Egypt')">Ancient Egypt</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Warriors & Battles')">Warriors &amp; Battles</button>
       <button class="topic-btn" type="button" onclick="selectTopic('Music & Instruments')">Music &amp; Instruments</button>
@@ -197,7 +197,7 @@
     localStorage.setItem("huntTopic", finalTopic);
     localStorage.setItem("huntOutput", JSON.stringify(normalized));
     window.location.href = "map.html";
-    
+
     } catch (err) {
       console.error("Fetch error:", err);
       alert("There was an error generating your map. Please try again.");

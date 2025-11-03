@@ -123,7 +123,7 @@
 <body>
 
 <header class="map-header">
-  <h1 id="map-header-title">Your Scavenger Hunt Map</h1>
+  <h1 id="map-header-title">Here's your map!</h1>
   <p>
     Explore the museum and find these hidden treasures.
   </p>
@@ -133,28 +133,41 @@
 
   <!-- Instead of PDF preview, show AI results for now -->
   <div class="pdf-preview-wrapper">
+    <!-- PRINTABLE AREA -->
+    <div id="printable">
+      <div class="sheet-header">
+    <div class="title">
+      <span id="sheet-title"></span>
+    </div>
+    <div class="meta">
+      <div class="meta-field">
+        <strong>Name:</strong>
+        <span class="blank-line"></span>
+      </div>
+      <div class="meta-field">
+        <strong>Date:</strong>
+        <span class="blank-line short"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table header row -->
+ <!-- <div class="table-head">
+    <div>Art</div>
+    <div>Details</div>
+    <div>What I learned</div>
+  </div> -->
     <div class="results-scroll" id="results-text">
       Loading scavenger hunt...
     </div>
 
-    <div class="pdf-actions">
-        <a
-          href="#"
-          target="_blank"
-          id="view-full-link"
-          class="pdf-actions-link"
-        >
-        
-          <span>View full map</span>
-        </a>
-        <span>(PDF coming soon)</span>
-      </div>
+    </div>
   </div>
 
   <!-- Actions -->
   <div class="btn-row">
 
-    <button
+  <!--  <button
       class="action-btn primary"
       onclick="location.href='mailto:?subject=My%20Met%20Scavenger%20Hunt&body=Here%20is%20my%20scavenger%20hunt%20text:%0A%0A' + encodeURIComponent(document.getElementById('results-text').innerText)"
     >
@@ -172,11 +185,11 @@
         <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
       </svg>
       <span>Email to Myself</span>
-    </button>
+    </button> -->
   
     <button
-      class="action-btn"
-      onclick="window.print()"
+      class="action-btn primary"
+      onclick="printMapOnly()"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -223,12 +236,19 @@
   Prototype interface. Text and layout subject to change.
 </footer>
 
+<script>
+  function printMapOnly() {
+    window.print();
+  }
+</script>
 <script src="assets/metObjects.js"></script>
 <script>
   // Read what index.html saved
   const topic = localStorage.getItem("huntTopic") || "Your Topic";
-  document.getElementById("map-header-title").textContent =
-    `Your Scavenger Hunt Map for "${topic}" at The Met`;
+  //document.getElementById("map-header-title").textContent =
+    //`Your Scavenger Hunt Map for "${topic}" at The Met`;
+
+  document.getElementById("sheet-title").textContent = `${topic} Scavenger Hunt at The Met`;
 
   const resultsBox = document.getElementById("results-text");
 
