@@ -223,78 +223,84 @@
   Prototype interface. Text and layout subject to change.
 </footer>
 
+<script src="assets/metObjects.js"></script>
 <script>
-  // Load our Met objects utility functions
-  const script = document.createElement('script');
-  script.src = 'assets/metObjects.js';
-  document.head.appendChild(script);
+  // Read what index.html saved
+  const topic = localStorage.getItem("huntTopic") || "Your Topic";
+  document.getElementById("map-header-title").textContent =
+    `Your Scavenger Hunt Map for "${topic}" at The Met`;
 
-  // Wait for the script to load and then process the data
-  script.onload = async () => {
-    const topic = localStorage.getItem("huntTopic") || "Your Topic";
-    let outputData = localStorage.getItem("huntOutput") || "[]";
-    
-    // Update header title
-    const headerEl = document.getElementById("map-header-title");
-    headerEl.textContent = `Your Scavenger Hunt Map for "${topic}" at The Met`;
+  const resultsBox = document.getElementById("results-text");
 
-    // Update results area
-    const resultsBox = document.getElementById("results-text");
-    
+  function safeParse(s) { try { return JSON.parse(s); } catch { return null; } }
+
+  // Unwrap shapes like: {objectIds,...}, [{output:{...}}], {output:{...}}
+  function normalize(o) {
+    if (!o) return {};
+    if (Array.isArray(o)) {
+      const first = o[0];
+      if (first && typeof first === "object") {
+        return normalize(first.output ?? first);
+      }
+      return {};
+    }
+    if (o.output && typeof o.output === "object") return o.output;
+    return o;
+  }
+
+  const raw = localStorage.getItem("huntOutput") || "{}";
+  const parsed = safeParse(raw) || {};
+  const data = normalize(parsed);
+
+  const objectIds = Array.isArray(data.objectIds)
+    ? data.objectIds.map(Number).filter(Number.isFinite)
+    : [];
+
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  (async () => {
     try {
-      // Parse the output data into an array of object IDs
-      let objectIds;
-      
-      // If input is already an array, use it
-      if (Array.isArray(outputData)) {
-        objectIds = outputData.map(Number).filter(n => Number.isFinite(n));
-      } else if (typeof outputData === 'string') {
-        const text = outputData.trim();
-        
-        try {
-          // Try parsing as JSON first (handles arrays, objects, and numbers)
-          const parsed = JSON.parse(text);
-          if (Array.isArray(parsed)) {
-            objectIds = parsed.map(Number).filter(n => Number.isFinite(n));
-          } else if (parsed && Array.isArray(parsed.output)) {
-            // Handle webhook response format { output: [...] }
-            objectIds = parsed.output.map(Number).filter(n => Number.isFinite(n));
-          } else if (Number.isFinite(parsed)) {
-            objectIds = [parsed];
-          } else {
-            objectIds = [];
-          }
-        } catch (e) {
-          // If not valid JSON, treat as comma-separated string
-          objectIds = text.split(/[,\s]+/)
-            .map(s => s.trim())
-            .filter(Boolean)
-            .map(Number)
-            .filter(n => Number.isFinite(n));
-        }
-      } else {
-        objectIds = [];
+      if (objectIds.length > 0 && typeof generateMetObjectsHTML === "function") {
+        resultsBox.innerHTML =
+          '<div style="padding:20px;text-align:center;">Loading artwork details...</div>';
+        const html = await generateMetObjectsHTML(objectIds); // from metObjects.js
+        resultsBox.innerHTML = html;
+        return;
       }
-      
-      if (Array.isArray(objectIds)) {
-        resultsBox.innerHTML = '<div style="text-align:center;padding:20px;">Loading artwork details...</div>';
-        
-        // Generate HTML for the Met objects
-        const objectsHTML = await generateMetObjectsHTML(objectIds);
-        resultsBox.innerHTML = objectsHTML;
-      } else {
-        throw new Error('Expected array of object IDs');
+
+      if (items.length > 0) {
+        // Simple fallback rendering directly from items[]
+        const html = items.map(it => `
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;border:1px solid #ddd;border-radius:6px;padding:10px;background:#fff;">
+            <div style="flex:1;">
+              <div style="font-weight:700;">${it.title || '(Untitled)'}</div>
+              <div style="color:#555;font-size:.9rem;">
+                ${it.artist || ''}${it.culture ? ' · ' + it.culture : ''}
+              </div>
+              <div style="color:#666;font-size:.85rem;">
+                ${it.date || ''}${it.gallery ? ' · Gallery ' + it.gallery : ''}
+              </div>
+              ${it.link ? `<div><a href="${it.link}" target="_blank" rel="noopener">View on The Met</a></div>` : ''}
+            </div>
+          </div>
+        `).join('');
+        resultsBox.innerHTML = html || 'No items.';
+        return;
       }
-    } catch (error) {
-      console.error('Error processing data:', error);
+
+      resultsBox.textContent = 'No results.';
+    } catch (e) {
+      console.error(e);
       resultsBox.innerHTML = `
         <div style="padding:20px;color:#666;">
-          <p>Error loading artworks. Details:</p>
-          <pre style="background:#f5f5f5;padding:10px;border-radius:4px;margin-top:10px;font-size:12px;">${error.message}\n\nReceived data: ${outputData}</pre>
-        </div>
-      `;
+          <p>Error loading artworks.</p>
+          <pre style="background:#f5f5f5;padding:10px;border-radius:4px;margin-top:10px;font-size:12px;">
+${e.message}
+          </pre>
+        </div>`;
     }
-  };
+  })();
+
 </script>
 
 </body>

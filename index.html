@@ -175,20 +175,29 @@
         })
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        const text = await response.text();
-        data = { output: text };
+    let raw = await response.text();
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch {}
+
+    function normalize(o) {
+      // Handles: {objectIds,...}, [{output:{...}}], {output:{...}}
+      if (!o) return null;
+      if (Array.isArray(o)) {
+        const first = o[0];
+        if (first && typeof first === 'object') {
+          return normalize(first.output ?? first); // unwrap output or take the object itself
+        }
+        return null;
       }
+      if (o.output && typeof o.output === 'object') return o.output;
+      return o; // assume it already has objectIds/items
+    }
 
-  // Persist response for map page to consume
-  localStorage.setItem("huntTopic", finalTopic);
-  localStorage.setItem("huntOutput", data.output || "");
-
-  // Navigate directly to the map page (skip debug panel)
-  window.location.href = 'map.html';
+    const normalized = normalize(parsed) || {};
+    localStorage.setItem("huntTopic", finalTopic);
+    localStorage.setItem("huntOutput", JSON.stringify(normalized));
+    window.location.href = "map.html";
+    
     } catch (err) {
       console.error("Fetch error:", err);
       alert("There was an error generating your map. Please try again.");
