@@ -69,3 +69,42 @@ This will:
 - `map.html` - Results display
 - `assets/metObjects.js` - Met API utilities
 - `styles.css` - Shared styles
+
+## Experiment
+
+The goal was to enable accurate free-form text to free-form text queries as opposed to searching by exact column attributes. We wanted users to hold a conversation with the AI, and for the AI to dynamically recommend art pieces based on a database.
+
+### Problems to Solve
+
+1. **LLMs are not retrieval systems**: We needed to separate the `object_id` from the query by creating embeddings of the database by row.
+2. **Weak embeddings from database data**: The information in the database alone didn't create strong enough embeddings. Therefore, we needed to scrape the Met Museum URL for each item's description so that the embedding is a combination of the description and the row data.
+
+### Solution
+
+   ![Creating embeddings by row](assets/create_embeddings_by_row.png)
+
+
+1. **Database storage**: The Met Museum database was stored on Supabase.
+
+2. **Data fetching**: An HTTP Request node was used to fetch rows and return columns such as "Tags", "artist_name", "artist_bio", "art_name", "resource_link", etc.
+
+3. **Parallel processing**: Two HTTP request branches were created from this point:
+   - **Branch 1**: One HTTP Request node uses ScrapingBee to scrape the website for descriptions.
+   - **Branch 2**: OpenAI HTTP Request nodes were used to generate embeddings for the descriptions and the row information.
+
+   ![Database embeddings on Supabase](assets/1004_embeddings_on_supabase.png)
+
+4. **Data merging**: A Merge node was used so that the final output contains the untouched `object_id` and embeddings.
+
+5. **Storage**: The embeddings were then stored back onto Supabase via matching `object_id`.
+
+6. **Query time flow**:
+   - The user triggers a chat.
+   - An OpenAI node vectorizes the user prompt.
+   - A second HTTP Request calls Supabase and runs a function that queries the database by embedding similarities.
+
+   ![Dynamic query flow](assets/dynamic_query.png)
+
+### Result
+
+The final flow works when a user prompts "I like horses" and the AI was able to return the top 5 results based on embedding similarities. However, the returned results were not relevant to the user's prompt. We think issue is that the embeddings generated from the user's prompt are too dissimilar to the embeddings created from art descriptions + row data. As a result, we did not proceed to integrate this dynamic system into the final working project. 
